@@ -211,3 +211,38 @@ df_selected_columns = filtered_df_vitri[selected_columns]
 # Hiển thị DataFrame mới
 st.dataframe(df_selected_columns)
 
+
+# đếm những mã có nhiều vị trí
+df_tonlovitri = pd.read_excel(io="Báo cáo tồn lô vị trí.xlsx",
+                   engine="openpyxl",
+                   sheet_name="Data",
+                   usecols='A:K',
+                   header=9)
+
+
+
+
+# Xóa các dòng có giá trị null trong cột 'Mã vị trí'
+df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
+
+# Xóa các dòng có vị trí giống nhau
+df_tonlovitri_cleaned = df_tonlovitri_cleaned.drop_duplicates(subset=['Mã vật tư ERP', 'Mã kho ERP', 'Mã vị trí'])
+df_tonlovitri_count = df_tonlovitri_cleaned.groupby(['Mã vật tư ERP', 'Mã kho ERP'])['Mã vị trí'].count().reset_index()
+df_tonlovitri_count = df_tonlovitri_count.rename(columns={'Mã vị trí': 'Số vị trí'})
+df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
+
+
+# Tạo biểu đồ cột số vị trí
+fig = px.bar(df_tonlovitri_merged, x='Mã kho ERP', y='Số vị trí', title='Số vị trí trong kho')
+fig.update_layout(xaxis_title='Kho', yaxis_title='Số vị trí')
+
+# Hiển thị biểu đồ trong Streamlit
+
+left_column3, middle_column4 = st.columns(2)
+with left_column3:  
+    st.title("Các mã có 2 vị trí trở lên")
+    st.dataframe(df_tonlovitri_merged)
+with middle_column4:
+    st.plotly_chart(fig)
+
+
