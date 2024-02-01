@@ -241,8 +241,18 @@ fig.update_layout(xaxis_title='Kho', yaxis_title='Số vị trí')
 left_column3, middle_column4 = st.columns(2)
 with left_column3:  
     st.title("Các mã có 2 vị trí trở lên")
-    st.dataframe(df_tonlovitri_merged)
+    st.dataframe(df_maNhieuViTri)
 with middle_column4:
     st.plotly_chart(fig)
 
+
+fig = px.treemap(df_tongTonTheoViTri, path=['Mã kho ERP', 'Mã vị trí'], values='Tồn vị trí')
+
+left_column4, middle_column5 = st.columns(2)
+with left_column4:  
+    st.title("Tổng tồn vị trí mỗi kho")
+    st.dataframe(df_tongTonTheoViTri)
+with middle_column5:
+    st.title('Biểu đồ Treemap Tổng tồn vị trí mỗi kho')
+    st.plotly_chart(fig)
 
