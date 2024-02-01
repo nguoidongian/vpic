@@ -151,6 +151,30 @@ with middle_column:
 
         ]
         )
+    
+left_column1, middle_column2 = st.columns(2)
+with left_column1:
+    df_phieu_chuaxacnhan = df_selection[df_selection['Trạng thái xác nhận ERP'] == 'N']
+    df_phieu_chuaxacnhan_kho = df_phieu_chuaxacnhan.groupby('Mã kho').size().reset_index(name='Số phiếu chưa xác nhận')
+
+# Vẽ biểu đồ hình tròn
+    fig = px.pie(df_phieu_chuaxacnhan_kho, values='Số phiếu chưa xác nhận', names='Mã kho', title='Số Phiếu Chưa Xác Nhận ERP Cho Từng Kho')
+    st.plotly_chart(fig)
+
+
+with middle_column2:
+    df_phieu_chuaquet = df_selection[(df_selection["Chiều truyền dữ liệu"] == 'ERP_WMS') &
+                                  (df_selection["Trạng thái xác nhận ERP"] == 'Y') &
+                                  (df_selection['Trạng thái WMS'] != 'Duyệt') &
+                                  (df_selection['Trạng thái WMS'] != 'Hoàn thành') &
+                                  (df_selection['Trạng thái WMS'] != 'Chuyển vào SC') &
+                                  (df_selection['Trạng thái WMS'] != 'Hủy phiếu')]
+
+    df_phieu_chuaquet_kho = df_phieu_chuaquet.groupby('Mã kho').size().reset_index(name='Số phiếu ERP chưa quét')
+
+# Vẽ biểu đồ hình tròn
+    fig = px.pie(df_phieu_chuaquet_kho, values='Số phiếu ERP chưa quét', names='Mã kho', title='Số Phiếu ERP Chưa Quét Cho Từng Kho')
+    st.plotly_chart(fig)
 
 
 ## lech tem
