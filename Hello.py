@@ -8,9 +8,6 @@ from streamlit_option_menu import option_menu
 
 st.set_page_config(page_title='KHO VPIC1',layout="wide")
 
-def main():
-
-    main()
 
 
 #Xuất nhập tồn
@@ -60,7 +57,7 @@ with column_xnt4:
 df = pd.read_excel(io="Bảng kê đối chiếu dữ liệu ERP - WMS.xlsx",
                    engine="openpyxl",
                    sheet_name="Data",
-                   usecols='B:I',
+                   usecols='B:K',
                    header=11)
 
 
