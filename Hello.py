@@ -213,7 +213,7 @@ st.dataframe(df_selected_columns)
 
 
 # đếm những mã có nhiều vị trí
-df_tonlovitri = pd.read_excel(io="D:\data\streamlit\Báo cáo tồn lô vị trí.xlsx",
+df_tonlovitri = pd.read_excel(io="Báo cáo tồn lô vị trí.xlsx",
                    engine="openpyxl",
                    sheet_name="Data",
                    usecols='A:K',
