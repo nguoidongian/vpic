@@ -213,7 +213,7 @@ st.dataframe(df_selected_columns)
 
 
 # đếm những mã có nhiều vị trí
-df_tonlovitri = pd.read_excel(io="Báo cáo tồn lô vị trí.xlsx",
+df_tonlovitri = pd.read_excel(io="D:\data\streamlit\Báo cáo tồn lô vị trí.xlsx",
                    engine="openpyxl",
                    sheet_name="Data",
                    usecols='A:K',
@@ -231,6 +231,9 @@ df_tonlovitri_count = df_tonlovitri_cleaned.groupby(['Mã vật tư ERP', 'Mã k
 df_tonlovitri_count = df_tonlovitri_count.rename(columns={'Mã vị trí': 'Số vị trí'})
 df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
 
+df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >= 2]
+df_tongTonTheoViTri = df_tonlovitri_merged.groupby(['Mã kho ERP', 'Mã vị trí'])['Tồn vị trí'].sum().reset_index()
+df_tongTonMoiKho = df_tongTonTheoViTri.groupby('Mã kho ERP')['Tồn vị trí'].sum().reset_index()
 
 # Tạo biểu đồ cột số vị trí
 fig = px.bar(df_tonlovitri_merged, x='Mã kho ERP', y='Số vị trí', title='Số vị trí trong kho')
