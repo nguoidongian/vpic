@@ -15,7 +15,7 @@ uploaded_file_tonlovitri = st.file_uploader("Chọn file: ", type=["xlsx", "xls"
 
 if uploaded_file_tonlovitri is not None:
         # Đọc dữ liệu từ file Excel
-     df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri, engine="xlrd", sheet_name="Data", usecols='A:J', header=10)
+    df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri, engine="xlrd", sheet_name="Data", usecols='A:J', header=10)
 
 # Xóa các dòng có giá trị null trong cột 'Mã vị trí'
     df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
