@@ -7,26 +7,31 @@ from PIL import Image
 from streamlit_option_menu import option_menu
 from datetime import datetime
 
+
 st.set_page_config(page_title='KHO VPIC1',layout="wide")
+# Báo cáo số vị trí các mã  
+st.subheader("Chọn file Excel WMS tồn lô vị trí")
+uploaded_file_tonlovitri = st.file_uploader("Chọn file: ", type=["xlsx", "xls"])
 
-def main():
-    st.title("Ứng dụng Streamlit")
-# Tạo sidebar với các tùy chọn menu
-with st.sidebar:
-    selected_option = option_menu("Main Menu",["Trang Chủ", " Báo Cáo"],
-                           icons=['house', 'gear'], menu_icon="cast", default_index=0)
-    selected_option
+if uploaded_file_tonlovitri is not None:
+        # Đọc dữ liệu từ file Excel
+    df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri,
+                            engine="openpyxl",
+                            sheet_name="Data",
+                            usecols='A:J',
+                            header=10)
 
-# Hiển thị nội dung chính tương ứng với tùy chọn được chọn
-if selected_option == "Trang Chủ":
-    trangchu()
-    # Hiển thị nội dung trang chủ ở đây
-elif selected_option == "Báo Cáo":
-    uploadbaocao()
-    # Hiển thị nội dung báo cáo ở đây
-elif selected_option == "Cài Đặt":
-    show_page_2()
-    # Hiển thị nội dung cài đặt ở đây
+# Xóa các dòng có giá trị null trong cột 'Mã vị trí'
+    df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
 
-if __name__ == "__main__":
-    main()
+# Xóa các dòng có vị trí giống nhau
+    df_tonlovitri_cleaned = df_tonlovitri_cleaned.drop_duplicates(subset=['Mã vật tư ERP', 'Mã kho ERP', 'Mã vị trí'])
+    df_tonlovitri_count = df_tonlovitri_cleaned.groupby(['Mã vật tư ERP', 'Mã kho ERP'])['Mã vị trí'].count().reset_index()
+    df_tonlovitri_count = df_tonlovitri_count.rename(columns={'Mã vị trí': 'Số vị trí'})
+    df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
+
+    df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >= 2]
+    st.dataframe(df_maNhieuViTri)
+
+# Báo cáo lech ton kho erp - wms  
+   
