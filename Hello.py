@@ -5,9 +5,15 @@ import matplotlib.pyplot as plt
 import plotly.express as px 
 from PIL import Image
 from streamlit_option_menu import option_menu
+from datetime import datetime
+
+
 
 st.set_page_config(page_title='KHO VPIC1',layout="wide")
 
+def main():
+
+    main()
 
 
 #Xuất nhập tồn
@@ -53,6 +59,104 @@ with column_xnt4:
     st.subheader("Tồn cuối :")
     st.markdown(f'<span style="font-size: 30px">{cell_value_toncuoi}</span>', unsafe_allow_html=True)
 
+
+
+# Đọc dữ liệu từ file Excel
+df_tonkhowms = pd.read_excel(io="Báo cáo tồn theo kho.xlsx",
+                              engine="openpyxl",
+                              sheet_name="Data",
+                              usecols='A:FJ',
+                              header=9)
+
+df_tonkhowms_unpivoted = pd.melt(df_tonkhowms, id_vars=['Mã vật tư ERP', 'Mã vật tư', 'Tên vật tư', 'Quy cách quản lý'],
+                                  var_name='Mã Kho', value_name='Giá trị')
+
+# Loại bỏ các dòng có giá trị 0.000
+df_tonkhowms_unpivoted = df_tonkhowms_unpivoted[df_tonkhowms_unpivoted['Giá trị'] != 0.000]
+df_tonkhowms_cleaned = df_tonkhowms_unpivoted.dropna(subset=['Mã vật tư ERP'])
+
+# Chọn các cột cần hiển thị
+selected_tonkhowms_columns = ['Mã vật tư ERP', 'Tên vật tư', 'Quy cách quản lý', 'Mã Kho', 'Giá trị']
+
+# Tạo DataFrame mới chỉ chứa các cột được chọn
+df_tonkhowms_selected_columns = df_tonkhowms_cleaned[selected_tonkhowms_columns]
+df_tonkhowms_selected_columns['Mã Kho'] = df_tonkhowms_selected_columns['Mã Kho'].str.strip()
+
+# Hiển thị DataFrame unpivoted
+
+df_tonkhoerp = pd.read_excel(io="tonkhoerp.xlsx",
+                             engine="openpyxl",
+                             sheet_name="1",
+                             usecols='A:P',
+                             header=0)
+
+# Chọn các cột cần hiển thị
+selected_tonkhoerp_columns = ['Mã SP', 'Kho', 'SL tồn kho']
+
+# Tạo DataFrame mới chỉ chứa các cột được chọn
+df_tonkhoerp_selected_columns = df_tonkhoerp[selected_tonkhoerp_columns]
+df_tonkhoerp_selected_columns['Kho'] = df_tonkhoerp_selected_columns['Kho'].str.strip()
+
+# Hiển thị DataFrame tonkhoerp
+
+
+# Merge hai DataFrame dựa trên cột 'Mã vật tư ERP' và 'Kho'
+
+merged_df = pd.merge(df_tonkhoerp_selected_columns, df_tonkhowms_selected_columns,
+                     left_on=['Mã SP', 'Kho'], right_on=['Mã vật tư ERP', 'Mã Kho'],
+                     how='outer', suffixes=('_tonkhoerp', '_tonkhowms'))
+
+# Tạo cột chênh lệch
+merged_df = merged_df.fillna(0)
+merged_df['Chênh lệch'] = merged_df['Giá trị'] - merged_df['SL tồn kho']
+filtered_df = merged_df[(merged_df['Chênh lệch'] != 0)
+                        & (merged_df['Kho'] != 'Tất:')
+                        & (merged_df['Kho'] != 'TS:')]
+
+
+# Hiển thị kết quả
+
+df_Khodachay = pd.read_excel(io="KHO CHẠY WMS.xlsx",
+                             engine="openpyxl",
+                             sheet_name="Data",
+                             usecols='A:D',
+                             header=0)
+df_Khodachay['Mã kho'] = df_Khodachay['Mã kho'].str.strip()
+
+df_Khodachay = df_Khodachay.dropna(subset=['WMS'])
+
+merged_df_final = pd.merge(filtered_df, df_Khodachay,
+                     left_on=['Kho'], right_on=['Mã kho'],
+                     how='outer', suffixes=('_tonkhoerp', '_Khodachay'))
+
+merged_df_final = merged_df_final.dropna(subset=['Mã kho', 'Mã SP'])
+total_somalecherp = int(merged_df_final["Mã SP"].count())
+
+st.subheader("Đối chiếu tồn kho chiều ERP -> WMS"+ " Lệch "+ " " + (str(total_somalecherp)) + " " + "mã")
+st.dataframe(merged_df_final)
+
+# Đối chiếu tồn kho WMS - ERP
+
+merged_WMS_df = pd.merge(df_tonkhowms_selected_columns,df_tonkhoerp_selected_columns,
+                     left_on=['Mã vật tư ERP', 'Mã Kho'], right_on=['Mã SP', 'Kho'],
+                     how='outer', suffixes=('_tonkhowms', '_tonkhoerp'))
+merged_WMS_df = merged_WMS_df.fillna(0)
+merged_WMS_df['Chênh lệch'] = merged_WMS_df['SL tồn kho'] - merged_WMS_df['Giá trị']
+filtered_WMS_df = merged_WMS_df[(merged_WMS_df['Chênh lệch'] != 0)
+                        & (merged_WMS_df['Kho'] != 'Tất:')
+                        & (merged_WMS_df['Kho'] != 'TS:')]
+
+merged_WMS_df_final = pd.merge(filtered_WMS_df, df_Khodachay,
+                     left_on=['Mã Kho'], right_on=['Mã kho'],
+                     how='outer', suffixes=('_tonkhowms', '_Khodachay'))
+
+merged_WMS_df_final = merged_WMS_df_final.dropna(subset=['Mã kho', 'Mã SP'])
+total_somalechwms = int(merged_WMS_df_final["Mã vật tư ERP"].count())
+
+st.subheader("Đối chiếu tồn kho chiều WMS -> ERP"+ " Lệch "+ " " + (str(total_somalechwms)) + " " + "mã")
+
+st.dataframe(merged_WMS_df_final)
+
 #Bảng kê đối chiếu dữ liệu ERP - WMS
 df = pd.read_excel(io="Bảng kê đối chiếu dữ liệu ERP - WMS.xlsx",
                    engine="openpyxl",
@@ -85,7 +189,7 @@ truyendulieu = st.sidebar.multiselect("Chưa xác nhận ERP",
 df_selection = df.query("`Mã kho` == @makho and `Chiều truyền dữ liệu` == @truyendulieu")
 df_selection = df_selection.fillna(0)
 
-# Kiểm tra và xử lý giá trị NaN
+
 
 
 # Tính tổng số phiếu
@@ -109,11 +213,14 @@ total_wmschuaquet = int(
 
     ).sum()
 )
+df_selection['Giờ tạo'] = pd.to_datetime(df_selection['Giờ tạo'], errors='coerce')
 
+# Lấy giờ hiện tại
+now = datetime.now().time()
 
+# Tính chênh lệch thời gian
+df_selection['Chênh lệch thời gian (phút)'] = df_selection['Giờ tạo'].apply(lambda x: int((datetime.combine(datetime.min, now) - datetime.combine(datetime.min, x.time())).total_seconds() / 60))
 
-
-# Display pie chart with resized dimensions
 
 
 
@@ -136,7 +243,7 @@ with column3:
 left_column, middle_column = st.columns(2)
 
 with left_column:
-    st.dataframe(df_selection[df['Trạng thái xác nhận ERP'] == 'N'])
+    st.write(df_selection[df['Trạng thái xác nhận ERP'] == 'N'])
 
 with middle_column:
     st.dataframe(df_selection[(df_selection["Chiều truyền dữ liệu"] == 'ERP_WMS') &
@@ -149,6 +256,7 @@ with middle_column:
         ]
         )
     
+
 left_column1, middle_column2 = st.columns(2)
 with left_column1:
     df_phieu_chuaxacnhan = df_selection[df_selection['Trạng thái xác nhận ERP'] == 'N']
@@ -172,6 +280,7 @@ with middle_column2:
 # Vẽ biểu đồ hình tròn
     fig = px.pie(df_phieu_chuaquet_kho, values='Số phiếu ERP chưa quét', names='Mã kho', title='Số Phiếu ERP Chưa Quét Cho Từng Kho')
     st.plotly_chart(fig)
+
 
 
 ## lech tem
@@ -208,8 +317,10 @@ selected_columns = ['Mã vật tư ERP', 'Mã kho ERP', 'Tồn vị trí','SL th
 # Tạo DataFrame mới chỉ chứa các cột được chọn
 df_selected_columns = filtered_df_vitri[selected_columns]
 
+left_column1, middle_column2 = st.columns(2)
 # Hiển thị DataFrame mới
-st.dataframe(df_selected_columns)
+st.write(df_selected_columns)
+
 
 
 # đếm những mã có nhiều vị trí
@@ -235,6 +346,14 @@ df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >=
 df_tongTonTheoViTri = df_tonlovitri_merged.groupby(['Mã kho ERP', 'Mã vị trí'])['Tồn vị trí'].sum().reset_index()
 df_tongTonMoiKho = df_tongTonTheoViTri.groupby('Mã kho ERP')['Tồn vị trí'].sum().reset_index()
 
+
+# Chọn các cột cần hiển thị
+selected_columns_vitri = ['Mã vật tư ERP','Tên vật tư','Quy cách quản lý','ĐVT','Mã kho ERP', 'Tồn vị trí','Số vị trí']
+
+# Tạo DataFrame mới chỉ chứa các cột được chọn
+df_selected_vitri_columns = df_maNhieuViTri[selected_columns_vitri]
+
+left_column1, middle_column2 = st.columns(2)
 # Tạo biểu đồ cột số vị trí
 fig = px.bar(df_tonlovitri_merged, x='Mã kho ERP', y='Số vị trí', title='Số vị trí trong kho')
 fig.update_layout(xaxis_title='Kho', yaxis_title='Số vị trí')
@@ -244,7 +363,7 @@ fig.update_layout(xaxis_title='Kho', yaxis_title='Số vị trí')
 left_column3, middle_column4 = st.columns(2)
 with left_column3:  
     st.title("Các mã có 2 vị trí trở lên")
-    st.dataframe(df_maNhieuViTri)
+    st.dataframe(df_selected_vitri_columns)
 with middle_column4:
     st.plotly_chart(fig)
 
@@ -254,8 +373,8 @@ fig = px.treemap(df_tongTonTheoViTri, path=['Mã kho ERP', 'Mã vị trí'], val
 left_column4, middle_column5 = st.columns(2)
 with left_column4:  
     st.title("Tổng tồn vị trí mỗi kho")
-    st.dataframe(df_tongTonTheoViTri)
+    st.dataframe(df_tongTonTheoViTri.style.highlight_max(axis=0, color='yellow').set_table_styles([{'selector': 'tr:hover', 'props': [('background-color', 'yellow')]}]))
+
 with middle_column5:
     st.title('Biểu đồ Treemap Tổng tồn vị trí mỗi kho')
     st.plotly_chart(fig)
-
