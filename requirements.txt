@@ -4,5 +4,3 @@ openpyxl
 matplotlib
 plotly
 streamlit_option_menu
-pages.trangchu
-pages.uploadbaocao
