@@ -155,3 +155,4 @@ if uploaded_file_tonkhotemthung is not None:
 # Tạo DataFrame mới chỉ chứa các cột được chọn
     df_selected_columns = filtered_df_tonkhotemthung[selected_columns]
     st.write(df_selected_columns)
+
