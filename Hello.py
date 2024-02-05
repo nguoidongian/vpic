@@ -122,7 +122,7 @@ if uploaded_file_tonlovitri is not None:
     df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
 
     df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >= 2]
-    selected_columns_manhieuvitri = ['Mã vật tư ERP', 'Tên vật tư', 'Quy cách quản lý','ĐVT','Mã vị trí','Tồn vị trí','Số vị trí']
+    selected_columns_manhieuvitri = ['Mã vật tư ERP', 'Tên vật tư', 'Quy cách quản lý','ĐVT','Mã kho ERP','Mã vị trí','Tồn vị trí','Số vị trí']
     df_manhieuvitri_selected_columns = df_maNhieuViTri[selected_columns_manhieuvitri]
 
     st.subheader("Những mã có 2 vị trí")
