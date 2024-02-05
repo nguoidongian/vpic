@@ -102,3 +102,56 @@ if uploaded_file_tonkhowms is not None:
     st.subheader("Đối chiếu tồn kho chiều WMS -> ERP"+ " Lệch "+ " " + (str(total_somalechwms)) + " " + "mã")
 
     st.dataframe(merged_WMS_df_final)
+    
+st.subheader("Chọn file Excel WMS tồn lô vị trí")
+uploaded_file_tonlovitri = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonlovitri")
+
+if uploaded_file_tonlovitri is not None:
+        # Đọc dữ liệu từ file Excel
+    df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri,
+                            engine="openpyxl",
+                            header=9)
+
+# Xóa các dòng có giá trị null trong cột 'Mã vị trí'
+    df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
+
+# Xóa các dòng có vị trí giống nhau
+    df_tonlovitri_cleaned = df_tonlovitri_cleaned.drop_duplicates(subset=['Mã vật tư ERP', 'Mã kho ERP', 'Mã vị trí'])
+    df_tonlovitri_count = df_tonlovitri_cleaned.groupby(['Mã vật tư ERP', 'Mã kho ERP'])['Mã vị trí'].count().reset_index()
+    df_tonlovitri_count = df_tonlovitri_count.rename(columns={'Mã vị trí': 'Số vị trí'})
+    df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
+
+    df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >= 2]
+    st.subheader("Những mã có 2 vị trí")
+    st.dataframe(df_maNhieuViTri)
+
+st.subheader("Chọn file Excel Tồn kho tem thùng theo vị trí WMS")
+uploaded_file_tonkhotemthung = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonkhotemthung")
+
+if uploaded_file_tonkhotemthung is not None:
+        # Đọc dữ liệu từ file Excel
+    df_tonkhotemthung = pd.read_excel(uploaded_file_tonkhotemthung,
+                            engine="openpyxl",
+                            header=10)
+    df_tonkhotemthung["Chênh lệch"] = (df_tonkhotemthung["Tồn vị trí"] - df_tonkhotemthung["SL theo ĐVT tồn kho"])
+    df_tonkhotemthung = df_tonkhotemthung.fillna(0)
+# Lọc dữ liệu
+
+    filtered_df = df_tonkhotemthung[(df_tonkhotemthung["Tồn vị trí"] > 0) & (df_tonkhotemthung["Chênh lệch"] != 0) & df_tonkhotemthung["Mã vật tư ERP"] !=0]
+    sotemlech = int(((df_tonkhotemthung["Tồn vị trí"] > 0) & (df_tonkhotemthung["Chênh lệch"] != 0) & (df_tonkhotemthung["Mã vật tư ERP"] !=0)).sum())
+
+
+
+# Display the filtered DataFrame
+    st.title("Số tem lệch:" + " " + (str(sotemlech)) + " " + "cái")
+
+    makho_vitri = st.multiselect("Chọn loại kho", options=filtered_df['Mã kho ERP'].unique(),default=filtered_df['Mã kho ERP'].unique())
+    df_tonkhotemthung_selection = df_tonkhotemthung.query("`Mã kho ERP` == @makho_vitri")
+    filtered_df_tonkhotemthung = df_tonkhotemthung_selection[(df_tonkhotemthung_selection["Tồn vị trí"] > 0) & (df_tonkhotemthung_selection["Chênh lệch"] != 0) ]
+
+ # Chọn các cột cần hiển thị
+    selected_columns = ['Mã vật tư ERP', 'Mã kho ERP', 'Tồn vị trí','SL theo ĐVT tồn kho','Chênh lệch']
+
+# Tạo DataFrame mới chỉ chứa các cột được chọn
+    df_selected_columns = filtered_df_tonkhotemthung[selected_columns]
+    st.write(df_selected_columns)
