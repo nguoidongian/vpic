@@ -177,17 +177,21 @@ if uploaded_file_fifo is not None:
 
     df_fifo_merged = df_fifo_merged.sort_values(by=['Mã vật tư ERP', 'Mã lô'], ascending=True)
 
-
-
-
-# Tạo cột 'Kết quả' dựa trên điều kiện
+  # Tạo cột 'Kết quả' dựa trên điều kiện
     df_fifo_merged['Kết quả'] = (df_fifo_merged['Mã vật tư ERP'] == df_fifo_merged['Mã vật tư ERP'].shift(-1)) & \
                             (df_fifo_merged['Tồn cuối'] != 0) & \
                             (df_fifo_merged['Số lượng xuất'].shift(-1) != 0)
-
-# Map the boolean values to 'Sai' and 'Đúng'
     df_fifo_merged['Kết quả'] = df_fifo_merged['Kết quả'].map({True: 'Sai', False: 'Đúng'})
+    
+    df_fifo_merged['Lọc'] = ((df_fifo_merged['Mã vật tư ERP'] == df_fifo_merged['Mã vật tư ERP'].shift(1)) & 
+                         (df_fifo_merged['Kết quả'].shift(1) == 'Sai')) | (df_fifo_merged['Kết quả'] == 'Sai')
+
+
+                            
+    df_fifo_merged['Lọc'] = df_fifo_merged['Lọc'].map({True: 'Sai', False: 'Đúng'})
+    df_filtered = df_fifo_merged.loc[df_fifo_merged['Lọc'] == 'Sai']
+    df_filtered = df_filtered.sort_values(by=['Mã vật tư ERP', 'Mã lô'], ascending=True)
 
 # Hiển thị DataFrame
     st.subheader("FiFo sai đúng")
-    st.dataframe(df_fifo_merged)
+    st.dataframe(df_filtered)
