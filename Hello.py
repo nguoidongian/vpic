@@ -10,7 +10,7 @@ from datetime import datetime
 st.set_page_config(page_title='KHO VPIC1',layout="wide")
 # Báo cáo số vị trí các mã  
 
-st.subheader("Chọn file Excel Tồn kho ERP")
+st.subheader("Chọn file Excel Tồn kho ERP ( Đối chiếu tồn kho ERP - WMS )")
 uploaded_file_tonkhoerp = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonkhoerp")
 
 
@@ -23,17 +23,14 @@ if uploaded_file_tonkhoerp is not None:
     df_tonkhoerp_selected_columns = df_tonkhoerp[selected_tonkhoerp_columns]
     df_tonkhoerp_selected_columns['Kho'] = df_tonkhoerp_selected_columns['Kho'].str.strip()
 
-
-
-
-st.subheader("Chọn file Excel Tồn theo kho WMS")
+st.subheader("Chọn file Excel Tồn theo kho WMS ( Đối chiếu tồn kho ERP - WMS )")
 uploaded_file_tonkhowms = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonkhowms")
 
 if uploaded_file_tonkhowms is not None:
         # Đọc dữ liệu từ file Excel
     df_tonkhowms = pd.read_excel(uploaded_file_tonkhowms,
                             engine="openpyxl",
-                            header=10)
+                            header=9)
     df_tonkhowms_unpivoted = pd.melt(df_tonkhowms, id_vars=['Mã vật tư ERP', 'Mã vật tư', 'Tên vật tư', 'Quy cách quản lý'],
                                   var_name='Mã Kho', value_name='Giá trị')
 
@@ -103,14 +100,14 @@ if uploaded_file_tonkhowms is not None:
 
     st.dataframe(merged_WMS_df_final)
     
-st.subheader("Chọn file Excel WMS tồn lô vị trí")
+st.subheader("Chọn file Excel WMS tồn lô vị trí ( Các mã có 2 vị trí trở lên )")
 uploaded_file_tonlovitri = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonlovitri")
 
 if uploaded_file_tonlovitri is not None:
         # Đọc dữ liệu từ file Excel
     df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri,
                             engine="openpyxl",
-                            header=10)
+                            header=9)
 
 # Xóa các dòng có giá trị null trong cột 'Mã vị trí'
     df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
@@ -122,13 +119,13 @@ if uploaded_file_tonlovitri is not None:
     df_tonlovitri_merged = pd.merge(df_tonlovitri_cleaned, df_tonlovitri_count, on=['Mã vật tư ERP', 'Mã kho ERP'], how='left')
 
     df_maNhieuViTri = df_tonlovitri_merged[df_tonlovitri_merged['Số vị trí'] >= 2]
-    selected_columns_manhieuvitri = ['Mã vật tư ERP', 'Tên vật tư', 'Quy cách quản lý','ĐVT','Mã kho ERP','Mã vị trí','Tồn vị trí','Số vị trí']
+    selected_columns_manhieuvitri = ['Mã vật tư ERP', 'Tên vật tư', 'Quy cách quản lý','ĐVT','Mã vị trí','Tồn vị trí','Số vị trí']
     df_manhieuvitri_selected_columns = df_maNhieuViTri[selected_columns_manhieuvitri]
 
     st.subheader("Những mã có 2 vị trí")
     st.dataframe(df_manhieuvitri_selected_columns)
 
-st.subheader("Chọn file Excel Tồn kho tem thùng theo vị trí WMS")
+st.subheader("Chọn file Excel Tồn kho tem thùng theo vị trí WMS ( Các mã lệch tem thùng )")
 uploaded_file_tonkhotemthung = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="tonkhotemthung")
 if uploaded_file_tonkhotemthung is not None:
         # Đọc dữ liệu từ file Excel
@@ -158,3 +155,39 @@ if uploaded_file_tonkhotemthung is not None:
     df_selected_columns = filtered_df_tonkhotemthung[selected_columns]
     st.write(df_selected_columns)
 
+
+st.subheader("Chọn file Excel Tổng hợp nhập xuất tồn theo lô ( FiFo sai đúng )")
+uploaded_file_fifo = st.file_uploader("Chọn file: ", type=["xlsx", "xls"], key="fifo")
+if uploaded_file_fifo is not None:
+        # Đọc dữ liệu từ file Excel
+    df_fifo = pd.read_excel(uploaded_file_fifo,
+                            engine="openpyxl",
+                            header=12)
+
+
+# Đảm bảo rằng cột 'Mã vật tư ERP' là một Series
+    df_fifo['Mã vật tư ERP'] = df_fifo['Mã vật tư ERP'].astype(str)
+
+# Xóa các dòng có giá trị null trong cột 'Mã lô'
+    df_fifo = df_fifo.dropna(subset=['Mã lô'])
+
+# Đếm số lượng mã lô cho từng mã vật tư ERP
+    ma_lo_count = df_fifo.groupby('Mã vật tư ERP')['Mã lô'].nunique().reset_index(name='Số lượng mã lô')
+    df_fifo_merged = pd.merge(df_fifo, ma_lo_count, on='Mã vật tư ERP', how='left')
+
+    df_fifo_merged = df_fifo_merged.sort_values(by=['Mã vật tư ERP', 'Mã lô'], ascending=True)
+
+
+
+
+# Tạo cột 'Kết quả' dựa trên điều kiện
+    df_fifo_merged['Kết quả'] = (df_fifo_merged['Mã vật tư ERP'] == df_fifo_merged['Mã vật tư ERP'].shift(-1)) & \
+                            (df_fifo_merged['Tồn cuối'] != 0) & \
+                            (df_fifo_merged['Số lượng xuất'].shift(-1) != 0)
+
+# Map the boolean values to 'Sai' and 'Đúng'
+    df_fifo_merged['Kết quả'] = df_fifo_merged['Kết quả'].map({True: 'Sai', False: 'Đúng'})
+
+# Hiển thị DataFrame
+    st.subheader("FiFo sai đúng")
+    st.dataframe(df_fifo_merged)
