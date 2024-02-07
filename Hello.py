@@ -30,7 +30,7 @@ if uploaded_file_tonkhowms is not None:
         # Đọc dữ liệu từ file Excel
     df_tonkhowms = pd.read_excel(uploaded_file_tonkhowms,
                             engine="openpyxl",
-                            header=9)
+                            header=10)
     df_tonkhowms_unpivoted = pd.melt(df_tonkhowms, id_vars=['Mã vật tư ERP', 'Mã vật tư', 'Tên vật tư', 'Quy cách quản lý'],
                                   var_name='Mã Kho', value_name='Giá trị')
 
@@ -107,7 +107,7 @@ if uploaded_file_tonlovitri is not None:
         # Đọc dữ liệu từ file Excel
     df_tonlovitri = pd.read_excel(uploaded_file_tonlovitri,
                             engine="openpyxl",
-                            header=9)
+                            header=10)
 
 # Xóa các dòng có giá trị null trong cột 'Mã vị trí'
     df_tonlovitri_cleaned = df_tonlovitri.dropna(subset=['Mã vị trí'])
