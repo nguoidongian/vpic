@@ -1,11 +1,12 @@
-import streamlit as st
 import pandas as pd
 import openpyxl as xl
+import streamlit as st
 import matplotlib.pyplot as plt
 import plotly.express as px 
 from PIL import Image
 from streamlit_option_menu import option_menu
 from datetime import datetime
+
 
 st.set_page_config(page_title='KHO VPIC1',layout="wide")
 # Báo cáo số vị trí các mã  
@@ -167,6 +168,8 @@ if uploaded_file_fifo is not None:
 
 # Đảm bảo rằng cột 'Mã vật tư ERP' là một Series
     df_fifo['Mã vật tư ERP'] = df_fifo['Mã vật tư ERP'].astype(str)
+    count_dem_ma_fifo = df_fifo["Mã vật tư ERP"].value_counts().count()
+
 
 # Xóa các dòng có giá trị null trong cột 'Mã lô'
     df_fifo = df_fifo.dropna(subset=['Mã lô'])
@@ -182,16 +185,47 @@ if uploaded_file_fifo is not None:
                             (df_fifo_merged['Tồn cuối'] != 0) & \
                             (df_fifo_merged['Số lượng xuất'].shift(-1) != 0)
     df_fifo_merged['Kết quả'] = df_fifo_merged['Kết quả'].map({True: 'Sai', False: 'Đúng'})
-    
-    df_fifo_merged['Lọc'] = ((df_fifo_merged['Mã vật tư ERP'] == df_fifo_merged['Mã vật tư ERP'].shift(1)) & 
-                         (df_fifo_merged['Kết quả'].shift(1) == 'Sai')) | (df_fifo_merged['Kết quả'] == 'Sai')
-
-
-                            
-    df_fifo_merged['Lọc'] = df_fifo_merged['Lọc'].map({True: 'Sai', False: 'Đúng'})
-    df_filtered = df_fifo_merged.loc[df_fifo_merged['Lọc'] == 'Sai']
+  
+    df_filtered = df_fifo_merged.loc[df_fifo_merged['Kết quả'] == 'Sai']
     df_filtered = df_filtered.sort_values(by=['Mã vật tư ERP', 'Mã lô'], ascending=True)
+    df_fifo_merged_final = pd.merge(df_fifo, df_filtered, on='Mã vật tư ERP', how='left')
+    df_fifo_selected_columns = ['STT_x', 'Mã lô_x', 'Mã vật tư ERP','Tên vật tư_x','Quy cách quản lý_x','Tồn đầu_x','Số lượng nhập_x','Số lượng xuất_x', 'Tồn cuối_x', 'Số lượng mã lô','Kết quả']
+    df_fifo_selected_columns_final = df_fifo_merged_final[df_fifo_selected_columns]
+    df_fifo_cleaned = df_fifo_selected_columns_final.dropna(subset=['Kết quả'])
+    total_mavattufifo= int(df_fifo_cleaned["Mã vật tư ERP"].count())
+    count_dem_ma_sai = df_fifo_cleaned["Mã vật tư ERP"].value_counts().count()
 
 # Hiển thị DataFrame
-    st.subheader("FiFo sai đúng")
-    st.dataframe(df_filtered)
+    
+
+
+    fig_pie = px.pie(
+    names=["Số mã sai", "Số mã xuất nhập"],
+    values=[count_dem_ma_sai, count_dem_ma_fifo],
+    title="Biểu đồ hình tròn so sánh số lượng mã vật tư ERP sai và fifo",
+    labels={"Sai": "Số lượng mã vật tư ERP sai", "Fifo": "Số lượng mã vật tư ERP fifo"},
+    hole=0.3,  # Set the size of the center hole (0.3 means 30%)
+    opacity=0.8,  # Set opacity
+)
+
+# Customize text information on the chart
+    fig_pie.update_traces(
+    textinfo="percent+label",
+    hoverinfo="label+percent+value",
+    textfont_size=15,
+)
+
+# Hiển thị biểu đồ
+
+
+
+    column1, column2 = st.columns(2)
+    with column1:
+        st.subheader("FiFo sai đúng")
+        st.dataframe(df_fifo_cleaned)
+    with column2:
+        st.subheader("Số mã sai " + ": " + str(count_dem_ma_sai) + "/ " + "Số lượng mã: " + " " + str(count_dem_ma_fifo))
+        st.plotly_chart(fig_pie)
+
+
+    # Biểu đồ hình tròn so sánh số lượng mã vật tư ERP sai và fifo
