@@ -37,7 +37,7 @@ if uploaded_file_tonkhowms is not None:
         # Đọc dữ liệu từ file Excel
     df_tonkhowms = pd.read_excel(uploaded_file_tonkhowms,
                             engine="openpyxl",
-                            header=10)
+                            header=11)
     df_tonkhowms_unpivoted = pd.melt(df_tonkhowms, id_vars=['Mã vật tư ERP', 'Mã vật tư', 'Tên vật tư', 'Quy cách quản lý'],
                                   var_name='Mã Kho', value_name='Giá trị')
 
