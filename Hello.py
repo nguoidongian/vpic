@@ -1,43 +1,36 @@
 import streamlit as st
-import pandas as pd
-st.set_page_config(page_title='KHO VPIC1', layout="wide")
+import csv
+from datetime import datetime
 
-st.title("Chụp ảnh từ điện thoại và cập nhật bảng kiểm soát")
+def save_to_csv(data, filename=r'D:\New folder\data.csv'):
+    with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(data)
 
-# Tạo DataFrame mẫu
-df = pd.read_excel(io="anhtonghop.xlsx",
-                   header=4,
-                   sheet_name='Tổng',
-                   engine="openpyxl",)
+def main():
+    st.title("Ứng dụng quét và lưu vào CSV")
 
-# Hiển thị DataFrame
-st.write("DataFrame:", df)
+    # Lấy ngày và giờ hiện tại
+    current_datetime = datetime.now()
 
-# Người dùng nhập giá trị cần tìm
-search_KH = st.selectbox("Tìm kiếm theo khũng xe:", options=df['Số lượng xe chuyên dùng/tình trạng'].unique())
+    # Hiển thị ngày và giờ
+    st.write(f"Ngày: {current_datetime.date()}")
+    st.write(f"Giờ: {current_datetime.time()}")
 
-# Tìm kiếm dòng có giá trị tương ứng
-selected_row_index = df[df["Số lượng xe chuyên dùng/tình trạng"] == search_KH].index
+    # Tạo ô input cho người dùng nhập tên, email và số điện thoại
+    name = st.text_area("quét tên:", height=30)
 
-if len(selected_row_index) > 0:
-    selected_row_index = selected_row_index[0]
-    st.write("khung xe được chọn:", selected_row_index)
-    
-    # Tải lên ảnh từ iPhone
-    uploaded_file = st.file_uploader("Tải lên ảnh", type=["jpg", "jpeg", "png"])
+    # Nếu người dùng nhấn nút "Lưu", lưu dữ liệu vào file CSV
+    if st.button("Lưu"):
+        # Format ngày và giờ thành chuỗi
+        datetime_str = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+        # Tách dữ liệu thành từng dòng
+        lines = name.split('\n')
+        # Lưu mỗi dòng dữ liệu với ngày giờ hiện tại
+        for line in lines:
+            data = [datetime_str, line.strip()]
+            save_to_csv(data)
+        st.success("Dữ liệu đã được lưu thành công vào file CSV.")
 
-    if uploaded_file is not None:
-        # Lưu ảnh tải lên
-        image_path = f"D:/New folder/{search_KH}.jpg"  # Đường dẫn lưu ảnh
-
-        with open(image_path, "wb") as f:
-            f.write(uploaded_file.getvalue())
-
-        # Cập nhật đường dẫn ảnh vào DataFrame
-         # Cập nhật đường dẫn ảnh vào DataFrame
-        df["Link Ảnh"] = f'<a href="{image_path}">Xem Ảnh</a>'
-
-    # Hiển thị DataFrame sau khi đã cập nhật
-        st.write("DataFrame sau khi cập nhật:", df)
-else:
-    st.write("Không tìm thấy dòng có giá trị tương ứng.")
+if __name__ == "__main__":
+    main()
