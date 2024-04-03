@@ -2,7 +2,7 @@ import streamlit as st
 import csv
 from datetime import datetime
 
-def save_to_csv(data, filename=r'D:\New folder\data.csv'):
+def save_to_csv(data, filename=r'data.csv'):
     with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(data)
