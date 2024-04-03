@@ -31,7 +31,7 @@ def main():
             st.success("Dữ liệu đã được lưu thành công vào file CSV.")
 
     if st.button("Xuất"):
-        with open(r'D:\New folder\data.csv', 'r', newline='', encoding='utf-8') as csvfile:
+        with open(r'data.csv', 'r', newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 st.write(row)
