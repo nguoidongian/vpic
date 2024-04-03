@@ -1,9 +1,12 @@
 import streamlit as st
 import csv
 from datetime import datetime
+import os
 
-def save_to_csv(data, filename=r'/data.csv'):
-    with open(filename, 'a', newline='', encoding='utf-8') as csvfile:
+def save_to_csv(data, filename='data/data.csv'):
+    # Get the absolute path of the file
+    filepath = os.path.join(os.getcwd(), filename)
+    with open(filepath, 'a', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(data)
 
@@ -31,7 +34,8 @@ def main():
             st.success("Dữ liệu đã được lưu thành công vào file CSV.")
 
     if st.button("Xuất"):
-        with open(r'/data.csv', 'r', newline='', encoding='utf-8') as csvfile:
+        filepath = os.path.join(os.getcwd(), 'data/data.csv')
+        with open(filepath, 'r', newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 st.write(row)
