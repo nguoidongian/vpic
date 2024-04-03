@@ -19,10 +19,13 @@ def main():
     st.write(f"Giờ: {current_datetime.time()}")
 
     with st.form(key='my_form'):
-        name = st.text_area("quét tên:", height=30)
-        order_code = st.text_input("Mã đơn:")
-        
-        option = st.selectbox("Chọn loại:", ["Nhập", "Xuất"])
+        col1,col2 = st.columns([1,2])
+        with col1:
+            option = st.selectbox("Chọn loại:", ["Nhập", "Xuất"])
+        with col2:
+            order_code = st.text_input("Mã đơn:")
+
+        name = st.text_area("quét tên:", height=30)        
 
         submitted = st.form_submit_button("Lưu")
 
@@ -38,7 +41,7 @@ def main():
         with open(filepath, 'r', newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                st.dataframe(row)
+                st.dataframe(reader)
 
 if __name__ == "__main__":
     main()
