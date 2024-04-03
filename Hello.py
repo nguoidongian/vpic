@@ -38,7 +38,7 @@ def main():
         with open(filepath, 'r', newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                st.write(row)
+                st.dataframe(row)
 
 if __name__ == "__main__":
     main()
